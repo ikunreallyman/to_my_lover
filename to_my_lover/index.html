@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>致可爱的小瑶宝 ✨</title>
+    <style>
+        /* --- 全局设置 --- */
+        * { margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Microsoft YaHei', sans-serif;
+            touch-action: none; 
+        }
+
+        /* --- 星空画布 --- */
+        #star-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        }
+
+        /* --- 3D 容器核心 --- */
+        #perspective-box {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            perspective: 1200px; /* 透视深度 */
+            transform-style: preserve-3d;
+            z-index: 10;
+        }
+
+        #spin-container {
+            position: relative;
+            display: flex;
+            width: 120px; 
+            height: 170px; 
+            transform-style: preserve-3d; 
+            transform: rotateX(-10deg); 
+        }
+
+        /* --- 照片/视频样式 --- */
+        #spin-container img.photo {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            border-radius: 10px;
+            border: 3px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6);
+            /* 倒影 */
+            -webkit-box-reflect: below 10px linear-gradient(transparent, transparent, rgba(0,0,0,0.3));
+            object-fit: cover;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #spin-container img.photo:hover {
+            box-shadow: 0 0 25px rgba(255, 105, 180, 1);
+            transform: scale(1.1) translateZ(20px);
+            border-color: #fff;
+        }
+
+        /* --- 🌸 中间樱花树 (十字交叉法模拟3D) --- */
+        .sakura-tree {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 300px; height: 300px;
+            /* 居中定位 */
+            transform: translate(-50%, -60%); 
+            transform-style: preserve-3d;
+            pointer-events: none; /* 让鼠标能透过树拖拽 */
+        }
+        
+        .tree-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('https://img.alicdn.com/imgextra/i3/O1CN01QYqT8u1OYjM1ZqM1Z_!!6000000001719-2-tps-500-500.png'); /* 樱花树素材 */
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            filter: drop-shadow(0 0 10px rgba(255, 192, 203, 0.5));
+        }
+
+        /* 十字交叉：一张正面，一张旋转90度，形成立体感 */
+        .tree-layer:nth-child(1) { transform: rotateY(0deg); }
+        .tree-layer:nth-child(2) { transform: rotateY(90deg); }
+
+        /* --- ✨ 顶部华丽文字 --- */
+        .top-title {
+            position: absolute;
+            top: -180px; /* 悬浮在上方 */
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 45px;
+            font-weight: bold;
+            white-space: nowrap;
+            text-align: center;
+            /* 华丽的霓虹光效 */
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px #ff00de,
+                0 0 30px #ff00de,
+                0 0 40px #ff00de;
+            animation: float-text 3s ease-in-out infinite;
+            /* 保持文字始终面向屏幕 (可选，目前跟随旋转更有3D感) */
+            /* transform: translateX(-50%) rotateY(calc(-1 * var(--rotate-y))); */
+        }
+
+        @keyframes float-text {
+            0%, 100% { top: -180px; text-shadow: 0 0 20px #ff00de; }
+            50% { top: -200px; text-shadow: 0 0 40px #ff00de; }
+        }
+
+        /* --- 魔法地台 --- */
+        #ground {
+            width: 1000px; height: 1000px;
+            position: absolute;
+            top: 100%; left: 50%;
+            transform: translate(-50%, -50%) rotateX(90deg);
+            background: radial-gradient(center center, farthest-side, rgba(255, 105, 180, 0.15), transparent);
+            border-radius: 50%;
+            animation: pulse-ground 4s infinite ease-in-out;
+        }
+        @keyframes pulse-ground {
+            0%, 100% { transform: translate(-50%, -50%) rotateX(90deg) scale(0.8); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) rotateX(90deg) scale(1); opacity: 0.8; }
+        }
+
+        /* --- 飘落元素 --- */
+        .falling-item {
+            position: absolute;
+            top: -50px;
+            color: #ffb7b2;
+            font-size: 20px;
+            opacity: 0.8;
+            z-index: 5;
+            pointer-events: none;
+            animation: fall linear forwards;
+        }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+
+        /* --- 音乐按钮 --- */
+        .music-control {
+            position: fixed; top: 20px; right: 20px; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            color: #fff; cursor: pointer; z-index: 100;
+            animation: rotate-music 4s linear infinite;
+        }
+        @keyframes rotate-music { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* --- 交互遮罩 --- */
+        #start-mask {
+            position: fixed; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 999;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            color: #fff; cursor: pointer; transition: opacity 1s;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 动态星空 -->
+    <canvas id="star-canvas"></canvas>
+
+    <!-- 2. 音乐 -->
+    <audio id="bgm" src="https://music.163.com/song/media/outer/url?id=1436709403.mp3" loop></audio>
+    <div class="music-control" onclick="toggleMusic()">🎵</div>
+
+    <!-- 3. 开场遮罩 -->
+    <div id="start-mask">
+        <div style="font-size: 60px; animation: beat 1s infinite;">❤️</div>
+        <div style="margin-top:20px; font-size: 20px;">点击开启小瑶宝的专属礼物</div>
+    </div>
+
+    <!-- 4. 3D 舞台 -->
+    <div id="perspective-box">
+        <div id="spin-container">
+            
+            <!-- ✨ 顶部华丽文字 (加在这里，跟随旋转) ✨ -->
+            <div class="top-title">小瑶宝天天开心</div>
+
+            <!-- 🌸 中间种一颗樱花树 (立体交叉结构) 🌸 -->
+            <div class="sakura-tree">
+                <div class="tree-layer"></div>
+                <div class="tree-layer"></div>
+            </div>
+
+            <!-- ================= 照片区域 ================= -->
+            <!-- 记得把 src 换成你真实的图片路径，比如 img/1.png -->
+            <img class="photo" src="img/1.png" alt="">
+            <img class="photo" src="img/2.png" alt="">
+            <img class="photo" src="img/3.png" alt="">
+            <img class="photo" src="img/4.png" alt="">
+            <img class="photo" src="img/5.png" alt="">
+            <img class="photo" src="img/6.png" alt="">
+            <img class="photo" src="img/7.png" alt="">
+            <img class="photo" src="img/8.png" alt="">
+            <img class="photo" src="img/9.png" alt="">
+            
+        </div>
+        <div id="ground"></div>
+    </div>
+
+    <script>
+        // ================= 配置区域 =================
+        const radius = 280; // 半径调大一点，给中间的树留空间
+        const autoRotateSpeed = -60; 
+        // ===========================================
+
+        // 1. 初始化 3D 相册
+        const ospin = document.getElementById('spin-container');
+        const aImg = ospin.querySelectorAll('img.photo');
+        const ground = document.getElementById('ground');
+        
+        ospin.style.width = "120px";
+        ospin.style.height = "170px";
+        ground.style.width = radius * 3 + "px";
+        ground.style.height = radius * 3 + "px";
+
+        // 分发图片角度
+        for(let i=0; i<aImg.length; i++) {
+            aImg[i].style.transform = `rotateY(${i * (360/aImg.length)}deg) translateZ(${radius}px)`;
+            aImg[i].style.transition = `transform 1s ${(aImg.length-i)*0.1}s`;
+        }
+
+        // 2. 鼠标拖拽控制
+        let sX, sY, nX, nY, desX = 0, desY = 0, tX = 0, tY = 0;
+        
+        if(autoRotateSpeed !== 0) {
+            const animName = autoRotateSpeed > 0 ? 'spin' : 'spinRevert';
+            ospin.style.animation = `${animName} ${Math.abs(autoRotateSpeed)}s infinite linear`;
+            
+            const styleSheet = document.styleSheets[0];
+            styleSheet.insertRule(`@keyframes spin { from{transform: rotateY(0deg);} to{transform: rotateY(360deg);} }`, styleSheet.cssRules.length);
+            styleSheet.insertRule(`@keyframes spinRevert { from{transform: rotateY(360deg);} to{transform: rotateY(0deg);} }`, styleSheet.cssRules.length);
+        }
+
+        document.onpointerdown = function(e) {
+            clearInterval(ospin.timer);
+            e = e || window.event;
+            sX = e.clientX; sY = e.clientY;
+
+            this.onpointermove = function(e) {
+                e = e || window.event;
+                nX = e.clientX; nY = e.clientY;
+                desX = nX - sX; desY = nY - sY;
+                tX += desX * 0.1; tY += desY * 0.1;
+                applyTransform(ospin);
+                sX = nX; sY = nY;
+            }
+
+            this.onpointerup = function() {
+                this.onpointermove = this.onpointerup = null;
+                ospin.timer = setInterval(function() {
+                    desX *= 0.95; desY *= 0.95;
+                    tX += desX * 0.1; tY += desY * 0.1;
+                    applyTransform(ospin);
+                    if(Math.abs(desX)<0.5 && Math.abs(desY)<0.5) clearInterval(ospin.timer);
+                }, 13);
+            }
+            return false;
+        }
+
+        function applyTransform(obj) {
+            if(tY > 180) tY = 180;
+            if(tY < 0) tY = 0;
+            obj.style.transform = `rotateX(${-tY}deg) rotateY(${tX}deg)`;
+        }
+
+        // 3. 星空背景
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        let stars = [];
+
+        function initStars() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
+            stars = [];
+            for(let i=0; i<300; i++) {
+                stars.push({
+                    x: Math.random()*w, y: Math.random()*h,
+                    r: Math.random()*1.5,
+                    dx: (Math.random()-0.5)*0.5, dy: (Math.random()-0.5)*0.5
+                });
+            }
+        }
+        initStars();
+        window.onresize = initStars;
+
+        function drawStars() {
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = 'white';
+            stars.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+                ctx.fill();
+                s.x += s.dx; s.y += s.dy;
+                if(s.x<0 || s.x>w) s.dx = -s.dx;
+                if(s.y<0 || s.y>h) s.dy = -s.dy;
+            });
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        // 4. 飘落爱心/樱花
+        function createFallingItem() {
+            const item = document.createElement('div');
+            item.className = 'falling-item';
+            const chars = ['🌸', '✨', '💕', '💮'];
+            item.innerText = chars[Math.floor(Math.random()*chars.length)];
+            item.style.left = Math.random() * 100 + 'vw';
+            item.style.fontSize = Math.random() * 20 + 10 + 'px';
+            item.style.animationDuration = Math.random() * 3 + 4 + 's';
+            document.body.appendChild(item);
+            setTimeout(() => item.remove(), 7000);
+        }
+        
+        // 5. 启动
+        const mask = document.getElementById('start-mask');
+        const bgm = document.getElementById('bgm');
+        mask.addEventListener('click', () => {
+            mask.style.opacity = '0';
+            setTimeout(() => mask.style.display = 'none', 1000);
+            bgm.play();
+            setInterval(createFallingItem, 200); // 加快飘落频率，营造樱花雨
+        });
+
+        function toggleMusic() {
+            if(bgm.paused) bgm.play(); else bgm.pause();
+        }
+    </script>
+</body>
+</html>
